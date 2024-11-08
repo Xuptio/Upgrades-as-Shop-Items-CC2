@@ -1,5 +1,5 @@
 # Upgrades-as-Shop-Items-CC2
-A work in progress for adding the option to buy upgrades in Carrier Command 2. 
+A work in progress for adding the option to buy upgrades in Carrier Command 2. ~line 1150 new code begins
 
 ![Capture](https://github.com/user-attachments/assets/6b8453ee-cf0a-40e0-b40c-523cf35fcba6)
 
