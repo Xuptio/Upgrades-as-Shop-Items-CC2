@@ -1,7 +1,8 @@
 # Upgrades-as-Shop-Items-CC2
 A work in progress for adding the option to buy upgrades in Carrier Command 2. ~line 1150 new code begins
 
-![Capture](https://github.com/user-attachments/assets/6b8453ee-cf0a-40e0-b40c-523cf35fcba6)
+![image](https://github.com/user-attachments/assets/2f09874e-e24a-4198-a869-6608f636d4b3)
+
 
 When the player is on the inventory screen, we can write logic that captures which island type the player has clicked on. 
 
