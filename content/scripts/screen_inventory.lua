@@ -133,41 +133,8 @@ g_screen_h = 128
 g_barge_count = 0
 g_barge_max = 1
 
---shield_spend = 0
--- scouting upgrade lv1 
-scouting_lv1_purchased = 0
-upgrade_1 = {
-                                    ['category'] = 0, 
-                                    ['index'] = 22, -- e_inventory_item
-                                    ['time'] = 300, 
-                                    ['transfer_duration'] = 1, 
-                                    ['cost'] = 0, 
-                                    ['desc'] = "2x scouting speed increase.\n(1 available)", 
-                                    ['name'] = "UPGRADE: Scouting Lv. 1", 
-                                    ['icon'] = 185, 
-                                    ['mass'] = 0 ,
-                                    ['shieldcost'] = 2, 
-                                    ['purchased'] = 0, 
-                                    ['flag_ref'] = F_DRYDOCK_WPTX_STORE_UPGRADE_1,
+ 
 
-                                    }
--- scouting upgrade lv2 
-scouting_lv2_purchased = 0
-upgrade_2 = {
-                                    ['category'] = 0, 
-                                    ['index'] = 22, -- e_inventory_item
-                                    ['time'] = 600, 
-                                    ['transfer_duration'] = 1, 
-                                    ['cost'] = 0, 
-                                    ['desc'] = "4x scouting speed increase.\n(1 available) ", 
-                                    ['name'] = "UPGRADE: Scouting Lv. 2", 
-                                    ['icon'] = 185, 
-                                    ['mass'] = 0 ,
-                                    ['shieldcost'] = 4, 
-                                    ['purchased'] = 0, 
-                                    ['flag_ref'] = F_DRYDOCK_WPTX_STORE_UPGRADE_2,
-
-                                    }
 
 --------------------------------------------------------------------------------
 --
@@ -288,13 +255,34 @@ function update(screen_w, screen_h, ticks)
     if not st then
         print(err)
     end
+
+    --print('pre sc Inv', dump(upgrade_1))
+    --wpt_, wptobj_ = initialse_upgrade_flag(g_upgrade_1_counter)
+    --upgrade_1['wpt_id'] = wpt_
+    --upgrade_1['wpt_obj'] = wptobj_
+    -- switches between 0 and 1
+    --print('sc Inv update', g_upgrade_1_purchased)
+    --local gu = get_upgrade_flag(2)
+
+    --print('sc Inv update', gu)
+    g_upgrade_1_purchased = get_upgrade_flag(2)
+
+    --get_upgrade_flag(upgrade_reference, upgrade_1)   
+    --print("sc inv update upgrade_1['purchased']", upgrade_1['purchased'])
+
 end
 
 function _update(screen_w, screen_h, ticks)
+    
+    --print('sc inv _update', g_upgrade_1_purchased)
+    --print("sc inv _update upgrade_1['purchased']", upgrade_1['purchased'])
+
     g_screen_w = screen_w
     g_screen_h = screen_h
     refresh_fow_islands()
     refresh_missile_data(false)
+
+    --print("up 1 2 purchased", get_upgrade_flag(2), get_upgrade_flag(3))
 
     local st, err = pcall(update_barge_cap, ticks)
     if not st then
@@ -1671,7 +1659,7 @@ function render_map_facility_ui(screen_w, screen_h, x, y, w, h, category_data, f
         drydock_island_id = drydock_island_id:get_id()
 
         --print('drydock_island_id', drydock_island_id)
-        local shield_count_l = get_team_shield_count(drydock_island_id)
+        local shield_count_l = get_team_shield_count()
         --print('shield_count_l', shield_count_l)
         --local team = update_get_screen_team_id()
         --local drydock_island_id = find_team_drydock(team)
@@ -1690,8 +1678,9 @@ function render_map_facility_ui(screen_w, screen_h, x, y, w, h, category_data, f
                 item['desc'] = chosenitemtable['desc']
                 item['mass'] = chosenitemtable['mass']
                 item['shieldcost'] = chosenitemtable['shieldcost']
-                item['purchased'] = chosenitemtable['purchased']
-                item['flag_ref'] = chosenitemtable['flag_ref']
+                --g_upgrade_1_purchased = get_upgrade_flag(chosenitemtable['upgrade_index'])
+                item['purchased'] = g_upgrade_1_purchased
+                item['upgrade_index'] = chosenitemtable['upgrade_index']
                 
             elseif upgradescoutlv2 == true then
                 item['name'] = chosenitemtable['name']
@@ -1699,9 +1688,10 @@ function render_map_facility_ui(screen_w, screen_h, x, y, w, h, category_data, f
                 item['cost'] = chosenitemtable['cost']
                 item['desc'] = chosenitemtable['desc']
                 item['mass'] = chosenitemtable['mass']
+                --g_upgrade_2_purchased = get_upgrade_flag(chosenitemtable['upgrade_index'])
                 item['shieldcost'] = chosenitemtable['shieldcost']
-                item['purchased'] = chosenitemtable['purchased']
-                item['flag_ref'] = chosenitemtable['flag_ref']
+                item['purchased'] = g_upgrade_2_purchased
+                item['upgrade_index'] = chosenitemtable['upgrade_index']
                 
             else    
                 item = g_item_data[g_tab_map.selected_facility_item]
@@ -1731,14 +1721,14 @@ function render_map_facility_ui(screen_w, screen_h, x, y, w, h, category_data, f
                 local isavailable 
                 local strcheck = item.name
                 if string.find(strcheck, 'UPGRADE: Scouting Lv. 1') then
-                    if item['purchased'] > 1 then
+                    if get_upgrade_flag(item['upgrade_index']) >= 1 then
                         isavailable = 1 
                     else
                         isavailable = 0 
                     end
                 elseif string.find(strcheck, 'UPGRADE: Scouting Lv. 2') then
                     --isavailable = scouting_lv2_purchased 
-                    if item['purchased'] > 1 then
+                    if get_upgrade_flag(item['upgrade_index']) >= 1 then
                         isavailable = 1 
                     else
                         isavailable = 0 
@@ -1767,32 +1757,59 @@ function render_map_facility_ui(screen_w, screen_h, x, y, w, h, category_data, f
                 --print('ui:button_group', dump(ui:button_group({ "Purchase Upgrade -" .. tostring(item['shieldcost']) }, true)))
 
                  
-                
-                --print('shield_count_l 1',shield_count_l)
-                --print(' g_shield_count.shield_count', g_shield_count.shield_count)
-                --if result == 0 and shield_count_l >= item['shieldcost'] and isavailable < 1 then
-                if result == 0 and shield_count_l >= item['shieldcost'] and item['purchased'] < 1 then
-                    --facility_tile:set_facility_add_production_queue_item(item.index, 1)
-                    print('I want one', 'shieldcost', item['shieldcost'], 'time', item['time'])
-                    print('upgrade reference', item['flag_ref'])
+                --print('PRE get_upgrade_flag(upgrade_reference)',"item['upgrade_index']", item['upgrade_index'], 'returned', get_upgrade_flag(item['upgrade_index']))
                     
+                --print('shield_count_l 1',shield_count_l)
+                --print("item['purchased']", item['purchased'])
+                --local buy_check = item['purchased']
+                --print('buy_check', buy_check)
+                --print('from inventory', g_unit)
+
+                --print("up 1 2 purchased table", upgrade_1['purchased'], upgrade_2['purchased'])
+                --print(upgrade_1['purchased'])
+                --print(upgrade_2['purchased'])
+                --print(g_upgrade_1_purchased)
+                --(g_upgrade_2_purchased)
+
+                --print("up 1 2 purchased getflag pre click buy", get_upgrade_flag(2), get_upgrade_flag(3))
+                
+                --get_upgrade_flag_other_script(2, upgrade_1)
+                --print("upgrade_1['wpt_id']", upgrade_1['wpt_id'])
+
+
+                if result == 0 and shield_count_l >= item['shieldcost'] and get_upgrade_flag(item['upgrade_index']) < 1 then
+                --if result == 0 and shield_count_l >= item['shieldcost'] and item['purchased'] < 1 then
+                    --facility_tile:set_facility_add_production_queue_item(item.index, 1)
+                    --print('I want one', 'shieldcost', item['shieldcost'], 'time', item['time'])
+                    --print('upgrade reference', item['flag_ref'])
+                    --print('G_COUNTER_EARNED_SHIELDS', get_team_shield_count())
 
                     --item['purchased'] = item['purchased'] + 1 
                     --print(dump(item))
                     local updated_shield_amount = shield_count_l - item['shieldcost']
+                    --print('G_COUNTER_EARNED_SHIELDS', get_team_shield_count())
                     --g_shield_count = shield_count_l - item['shieldcost']
                     --print('shield_count_l 2',shield_count_l)
-                    --set_team_shield_count(drydock_island_id, updated_shield_amount)
+                    set_team_shield_count(updated_shield_amount)
 
-                    print('pre upgrade flag 1', get_upgrade_flag(drydock_island_id, item['flag_ref']))
-                    print('pre upgrade flag 2', get_upgrade_flag(drydock_island_id, item['flag_ref']))
+                    local set_upgrade_state = item['purchased'] + 1
+
+                    
+                    set_upgrade_flag(item['upgrade_index'], set_upgrade_state)
+                    --print('POST get_upgrade_flag(upgrade_reference)',"item['upgrade_index']", item['upgrade_index'], 'returned', get_upgrade_flag(item['upgrade_index']))
+                    
+                    item['purchased'] = get_upgrade_flag(item['upgrade_index'])
+
+                    
+                    --print('pre upgrade flag 1', get_upgrade_flag(drydock_island_id, item['flag_ref']))
+                    --print('pre upgrade flag 2', get_upgrade_flag(drydock_island_id, item['flag_ref']))
                     --print('pre upgrade flag 1', get_upgrade_flag(item['flag_ref'], 1 ))
-                    print("item['flag_ref']", item['flag_ref'])
+                    --print("item['flag_ref']", item['flag_ref'])
                     --print('pre upgrade flag 2', get_upgrade_flag(item['flag_ref'], 1 ))
 
                     --local upgrade_flag_change = get_upgrade_flag(item['flag_ref'], 1 ) + 1
                     --set_upgrade_flag(drydock_island_id, item['flag_ref'], upgrade_flag_change)
-                    print('post upgrade flag', get_upgrade_flag(drydock_island_id, item['flag_ref']))
+                    --print('post upgrade flag', get_upgrade_flag(drydock_island_id, item['flag_ref']))
                     --item['purchased'] = get_upgrade_flag(drydock_island_id, item['flag_ref'])
 
                     --set_shield_count(shield_count_l, updated_shield)
@@ -1804,13 +1821,24 @@ function render_map_facility_ui(screen_w, screen_h, x, y, w, h, category_data, f
 
                     -- upgrade selection is not being passed down
                     if string.find(strcheck, 'UPGRADE: Scouting Lv. 1') then
-                        scouting_lv1_purchased = scouting_lv1_purchased + 1
-                        item['purchased'] = scouting_lv1_purchased
+                        --scouting_lv1_purchased = scouting_lv1_purchased + 1
+                        g_upgrade_1_purchased = get_upgrade_flag(item['upgrade_index'])
+                        upgrade_1['purchased'] = g_upgrade_1_purchased
+                        g_ve_hud_upp1_ref = g_upgrade_1_purchased
+
                         
                     elseif string.find(strcheck, 'UPGRADE: Scouting Lv. 2') then
-                        scouting_lv2_purchased = scouting_lv2_purchased + 1
-                        item['purchased'] = scouting_lv2_purchased
+                        --scouting_lv2_purchased = scouting_lv2_purchased + 1
+                        g_upgrade_2_purchased = get_upgrade_flag(item['upgrade_index'])
+                        upgrade_2['purchased'] = g_upgrade_2_purchased
+                        g_ve_hud_upp2_ref = g_upgrade_2_purchased 
+
                     end
+
+                    --print("up 1 2 purchased", item['name'], item['purchased'])
+                    --print("up 1 2 purchased", upgrade_1['purchased'], upgrade_2['purchased'])
+                    
+
                 else
                     --set_shield_count(shield_count_l)
 
@@ -2979,13 +3007,13 @@ function render_shields_display(x, y, is_active)
     local shields = 0
     local team = update_get_team(update_get_screen_team_id())
 
-    local teamno_fordrydock = update_get_screen_team_id()
-    local drydock_island_id = find_team_drydock(teamno_fordrydock)
-    drydock_island_id = drydock_island_id:get_id()
+    --local teamno_fordrydock = update_get_screen_team_id()
+    --local drydock_island_id = find_team_drydock(teamno_fordrydock)
+    --drydock_island_id = drydock_island_id:get_id()
     --local shield_count_l = get_team_shield_count(drydock_island_id)
     
     if team:get() then
-        shields = get_team_shield_count(drydock_island_id)   
+        shields = get_team_shield_count()   
     end
     
     -- io is disabled in game https://www.reddit.com/r/lua/comments/1lk2yn/file_io_help/
@@ -3003,8 +3031,8 @@ function render_shields_display(x, y, is_active)
     local text_w, text_h = update_ui_get_text_size(tostring(shields), 100, 2)
 
     update_ui_push_offset(x, y)
-    update_ui_image(-text_w - 9, 0, atlas_icons.column_difficulty, color8(255, 165, 0, 255), 0)
-    update_ui_text(-100, 0, tostring(shields), 100, 2, color8(255, 165, 0, 255), 0)
+    update_ui_image(-text_w - 3, 0, atlas_icons.column_difficulty, color8(255, 165, 0, 255), 0)
+    update_ui_text(-95, 0, tostring(shields), 100, 2, color8(255, 165, 0, 255), 0)
     update_ui_pop_offset()
 end
 
@@ -3410,3 +3438,5 @@ function tab_fuel_render(screen_w, screen_h, x, y, w, h, is_tab_active, screen_v
     ui:end_window()
     update_ui_pop_offset()
 end
+
+

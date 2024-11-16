@@ -85,6 +85,21 @@ function update(screen_w, screen_h, ticks)
 end
 
 function input_event(event, action)
+
+    print('i have input_event with the screen holomap ')
+    -- debug add shields to player team
+    local shield_count_holo = get_team_shield_count()
+    print('add 2 shields to count from holomap...')
+    local updated_shield_amount = shield_count_holo + 2
+    set_team_shield_count(updated_shield_amount)
+    print('current shield count: ', get_team_shield_count())
+    -- debug remove all upgrades 
+    print('remove all upgrades after touching screen holomap...')
+    set_upgrade_flag(2, 0)
+    print('post g_upgrade_1_purchased', get_upgrade_flag(2) )
+    set_upgrade_flag(3, 0)
+    print('post g_upgrade_2_purchased', get_upgrade_flag(3) )
+
     if action == e_input_action.press then
         if event == e_input.up then
             g_page = g_page - 1

@@ -1692,23 +1692,6 @@ function dump_profile_stats()
     end
 end
 
-g_shield_count = 0
 
---function get_shield_count() 
-    
---    return g_shield_count.shield_count
---end
 
---function set_shield_count(initial_shield, input_updated_shield_count) 
---    local initial_shield 
---    local input_updated_shield_count
---    g_shield_count.shield_count = input_updated_shield_count
-    --return input_updated_shield_count
---end
 
---local st, err = pcall(function()
---    debug.sethook(profiler_func, "cr")
---end)
---if not st then
---    print(err)
---end

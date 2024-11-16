@@ -1753,9 +1753,10 @@ F_DRYDOCK_WPTX_MARKER   = 0x02
 F_DRYDOCK_WPTX_SETTING  = 0x04
 F_DRYDOCK_WPTX_FACTORY_DAMAGED = 0x08
 -- define global variable and set unique waypoint number 
-F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT = 0x0A
-F_DRYDOCK_WPTX_STORE_UPGRADE_1 = 0x0B
-F_DRYDOCK_WPTX_STORE_UPGRADE_2 = 0x0C
+F_DRYDOCK_WPTX_COUNTERS = 0x10
+--F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT = 0x0A
+--F_DRYDOCK_WPTX_STORE_UPGRADE_1 = 0x0B
+--F_DRYDOCK_WPTX_STORE_UPGRADE_2 = 0x0C
 
 -- y() values for settings waypoints
 WPT_SETTING_RADAR_X1   = 1  -- no multiplier
@@ -3103,13 +3104,46 @@ end
 
 -- Get current shield count from stored waypoint 
 -- else return 0
-function get_team_shield_count(island_id)
+--function get_team_shield_count(island_id)
+--    local team = update_get_screen_team_id()
+--    local flag = get_special_waypoint(team, F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT, island_id)
+--    if flag ~= nil then
+--        --local now = update_get_logic_tick()
+--        local shield_count_l = flag:get_altitude()
+--        --local remaining = repaired - now
+--        if shield_count_l > 0 then
+--            return shield_count_l
+--        end
+--    end
+--    return 0
+--end
+
+-- store an update to the shield count 
+--function set_team_shield_count(island_id, updated_shield_count)
+--    local team = update_get_screen_team_id()
+--    local wpt = add_special_waypoint(team, F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT, island_id)
+--    if wpt ~= nil then
+--        local drydock = find_team_drydock(team)
+--        print("pre update shield count, island: " .. island_id .. ' wpt:' .. F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT .. " count=" .. get_team_shield_count(island_id))
+--        if drydock and drydock:get() then
+--            --local value = math.floor(math.min(tick_when_fixed, update_get_logic_tick() + g_island_factory_damage_ticks_max))
+--            local value = updated_shield_count
+--            print("updated shield count " .. island_id .. " count=" .. value)
+--            drydock:set_waypoint_altitude(wpt, value)
+--        end
+--    end
+--end
+
+-- new bred implementation 
+G_COUNTER_EARNED_SHIELDS = 1
+-- Get current shield count from stored waypoint 
+-- else return 0
+function get_team_shield_count()
     local team = update_get_screen_team_id()
-    local flag = get_special_waypoint(team, F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT, island_id)
-    if flag ~= nil then
-        --local now = update_get_logic_tick()
-        local shield_count_l = flag:get_altitude()
-        --local remaining = repaired - now
+    local earned_shields = get_special_waypoint(team, F_DRYDOCK_WPTX_COUNTERS, G_COUNTER_EARNED_SHIELDS)
+    --print('earned_shields:get_id()',earned_shields:get_id())
+    if earned_shields ~= nil then
+        local shield_count_l = earned_shields:get_altitude()
         if shield_count_l > 0 then
             return shield_count_l
         end
@@ -3118,101 +3152,143 @@ function get_team_shield_count(island_id)
 end
 
 -- store an update to the shield count 
-function set_team_shield_count(island_id, updated_shield_count)
+function set_team_shield_count(updated_shield_count)
     local team = update_get_screen_team_id()
-    local wpt = add_special_waypoint(team, F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT, island_id)
+    local wpt = add_special_waypoint(team, F_DRYDOCK_WPTX_COUNTERS, G_COUNTER_EARNED_SHIELDS)
+    --print('wpt:get_id()',wpt:get_id())
     if wpt ~= nil then
         local drydock = find_team_drydock(team)
-        print("pre update shield count, island: " .. island_id .. ' wpt:' .. F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT .. " count=" .. get_team_shield_count(island_id))
+        --print("pre update shield count" .. ' wpt:' .. F_DRYDOCK_WPTX_COUNTERS .. " count=" .. get_team_shield_count())
         if drydock and drydock:get() then
-            --local value = math.floor(math.min(tick_when_fixed, update_get_logic_tick() + g_island_factory_damage_ticks_max))
             local value = updated_shield_count
-            print("updated shield count " .. island_id .. " count=" .. value)
+            --print("updated shield count " .. " count=" .. value)
             drydock:set_waypoint_altitude(wpt, value)
         end
     end
 end
 
--- Get current status of upgrade  
--- else return 0
---function get_upgrade_flag(island_id, upgrade_stored_name)
---function get_upgrade_flag(upgrade_stored_name, island_id)
---    print('upgrade_stored_name 1', upgrade_stored_name)
---    local team = update_get_screen_team_id()
---    local flag = get_special_waypoint(team, upgrade_stored_name, island_id)
---    print('upgrade_stored_name 2', upgrade_stored_name)
---    print('flag 1', flag)
---    if flag ~= nil then
---        --local now = update_get_logic_tick()
---        local upgrade_flag = flag:get_altitude()
---        print('upgrade_flag 1', flag)
---        --local remaining = repaired - now
---        if upgrade_flag > 0 then
---            print('upgrade_flag 2', flag)
---            return upgrade_flag
---
---        end
---    end
---    return 0
---end
-
--- update and store if an upgrade was purchased 
---function set_upgrade_flag(island_id, upgrade_stored_name, upgradeflag)
---    local team = update_get_screen_team_id()
---    local stored_name_ref
---    if upgrade_stored_name == 14 then
---        stored_name_ref = F_DRYDOCK_WPTX_STORE_UPGRADE_1
---    elseif upgrade_stored_name == 18 then
---        stored_name_ref = F_DRYDOCK_WPTX_STORE_UPGRADE_2
---    end
-
---    local wpt = add_special_waypoint(team, stored_name_ref, island_id)
---    if wpt ~= nil then
---        local drydock = find_team_drydock(team)
---        print("pre update upgrade state, island: " .. island_id .. ' wpt:' .. stored_name_ref .. " flag=" .. get_upgrade_flag(island_id, stored_name_ref))
---        if drydock and drydock:get() then
---            --local value = math.floor(math.min(tick_when_fixed, update_get_logic_tick() + g_island_factory_damage_ticks_max))
---            local value_upgrade = upgradeflag
---            print("updated upgrade state  " .. island_id .. " flag=" .. value_upgrade)
---            drydock:set_waypoint_altitude(wpt, value_upgrade)
---        end
---    end
---end
-
 -----
 -- shared
 -----
-F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT = 0x0A   -- works as expected
-F_DRYDOCK_WPTX_STORE_UPGRADE_1 = 0x0B       -- defaults to 0x0A when calling get_upgrade_flag
-F_DRYDOCK_WPTX_STORE_UPGRADE_2 = 0x0C       -- same as above 
+--0x0a   = 00001010
+--0x0b   = 00001011
+--0x01   = 00000001
+--0x10
+--0x20
+--F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT = 0x0A   -- works as expected
+--F_DRYDOCK_WPTX_STORE_UPGRADE_2 = 0x0C       -- same as above 
 -- Get current status of upgrade, flag > 0 = purchased
 -- else return 0
 -- pass in drydock island id, wpt long reference name F_DRYDOCK_WPTX_STORE... 
-function get_upgrade_flag(island_id, upgrade_stored_name)
+
+g_upgrade_1_counter = 2 -- unique id refernce 
+g_upgrade_2_counter = 3 -- unique id refernce 
+function initialse_upgrade_flag(upgrade_reference)
     local team = update_get_screen_team_id()
-    local flag = get_special_waypoint(team, upgrade_stored_name, island_id)
-    if flag ~= nil then
-        local upgrade_flag = flag:get_altitude()
-        if upgrade_flag > 0 then
-            return upgrade_flag
+    local upgrade_flag = get_special_waypoint(team, F_DRYDOCK_WPTX_COUNTERS, upgrade_reference)
+    --upgrade_table['wpt_id'] = upgrade_flag:get_id()
+    --upgrade_table['wpt_obj'] = 
+    --print('upgrade_flag:get_id()',upgrade_flag:get_id())
+    --if upgrade_flag ~= nil then
+    --    local upgrade_value = upgrade_flag:get_altitude()
+    --    if upgrade_value > 0 then
+    --        return upgrade_value
+    --    end
+   --end
+   return upgrade_flag:get_id(), upgrade_flag
+end
+
+
+-- this variable will read out to other scripts as both 0 and 1 
+-- ie one version will be updated but the other will always report the 
+-- initialsed state of this script 
+
+g_upgrade_1_purchased = 0 -- variable to track and update if purchased
+g_upgrade_2_purchased = 0  
+--wpt_ = add_special_waypoint(team, F_DRYDOCK_WPTX_COUNTERS, g_upgrade_1_counter)
+--wpt_, wptobj_ = initialse_upgrade_flag(g_upgrade_1_counter)
+upgrade_1 = {
+                                    ['category'] = 0, 
+                                    ['index'] = 22, -- e_inventory_item
+                                    ['time'] = 300, 
+                                    ['transfer_duration'] = 1, 
+                                    ['cost'] = 0, 
+                                    ['desc'] = "2x scouting speed increase.\n(1 available)", 
+                                    ['name'] = "UPGRADE: Scouting Lv. 1", 
+                                    ['icon'] = 185, 
+                                    ['mass'] = 0 ,
+                                    ['shieldcost'] = 2, 
+                                    ['purchased'] = g_upgrade_1_purchased, 
+                                    ['upgrade_index'] = g_upgrade_1_counter,
+                                    --['wpt_obj'] = -1,
+                                    }
+--wpt_, wptobj_ = initialse_upgrade_flag(g_upgrade_2_counter)
+upgrade_2 = {
+                                    ['category'] = 0, 
+                                    ['index'] = 22, -- e_inventory_item
+                                    ['time'] = 600, 
+                                    ['transfer_duration'] = 1, 
+                                    ['cost'] = 0, 
+                                    ['desc'] = "4x scouting speed increase.\n(1 available) ", 
+                                    ['name'] = "UPGRADE: Scouting Lv. 2", 
+                                    ['icon'] = 185, 
+                                    ['mass'] = 0 ,
+                                    ['shieldcost'] = 4, 
+                                    ['purchased'] = g_upgrade_2_purchased, 
+                                    ['upgrade_index'] = g_upgrade_2_counter,
+                                    --['wpt_obj'] = -1,
+
+                                    }
+
+function dump(o)
+       if type(o) == 'table' then
+          local s = '{ '
+          for k,v in pairs(o) do
+             if type(k) ~= 'number' then k = '"'..k..'"' end
+             s = s .. '['..k..'] = ' .. dump(v) .. ','
+          end
+          return s .. '} '
+       else
+          return tostring(o)
+       end
+    end
+--print('pre lib veh', dump(upgrade_1))
+
+--g_unit = 50
+function get_upgrade_flag(upgrade_reference)
+    local team = update_get_screen_team_id()
+    local upgrade_flag = get_special_waypoint(team, F_DRYDOCK_WPTX_COUNTERS, upgrade_reference)
+    --upgrade_table['wpt_obj'] = upgrade_flag
+    --print('upgrade_flag:get_id()',upgrade_flag:get_id())
+    --print('g_upgrade_1_purchased from func', g_upgrade_1_purchased)
+    if upgrade_flag ~= nil then
+        local upgrade_value = upgrade_flag:get_altitude()
+        if upgrade_value > 0 then
+            return upgrade_value
         end
    end
     return 0
 end
 --update and store if an upgrade was purchased 
-function set_upgrade_flag(island_id, upgrade_stored_name, upgradeflag)
+function set_upgrade_flag(upgrade_reference, updated_value)
+    --print("upgrade_reference, updated_value", upgrade_reference, updated_value)
     local team = update_get_screen_team_id()
-    local wpt = add_special_waypoint(team, upgrade_stored_name, island_id)
+    local wpt = add_special_waypoint(team, F_DRYDOCK_WPTX_COUNTERS, upgrade_reference)
     if wpt ~= nil then
         local drydock = find_team_drydock(team)
-        print("pre update upgrade state, island: " .. island_id .. ' wpt:' .. upgrade_stored_name .. " flag=" .. get_upgrade_flag(island_id, upgrade_stored_name))
+        --print("pre update upgrade state" .. ' wpt:' .. upgrade_reference .. " flag=" .. get_upgrade_flag(upgrade_reference))
        if drydock and drydock:get() then
-            local value = upgradeflag
-            print("updated upgrade state  " .. island_id .. " flag=" .. value)
+            local value = updated_value
+            --print("updated upgrade state wpt: " .. upgrade_reference .. " flag=" .. value)
             drydock:set_waypoint_altitude(wpt, value)
         end
     end
 end
+-- vehicle_hud can not 'see' updates to the g_upgrade_2_purchased 
+
+
+
+
 
 
 

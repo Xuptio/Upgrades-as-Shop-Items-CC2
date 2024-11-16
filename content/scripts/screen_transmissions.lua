@@ -199,6 +199,12 @@ function _update(screen_w, screen_h, ticks)
 end
 
 function input_event(event, action)
+    -- debug clear all shileds from team
+    print('i have input_event with the screen transmissions ')
+    local shield_count_holo = 0
+    print('remove all shields from screen transmissions script...')
+    set_team_shield_count(shield_count_holo)
+
     g_ui:input_event(event, action)
 
     if action == e_input_action.press and  event == e_input.back then

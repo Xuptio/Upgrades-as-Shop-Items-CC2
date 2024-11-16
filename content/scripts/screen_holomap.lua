@@ -108,6 +108,7 @@ g_markers_z = nil
 
 g_quickbar_open = false
 
+g_shield_awarded = 0
 
 
 function parse()
@@ -168,11 +169,23 @@ function update(screen_w, screen_h, ticks)
     if not st then
         print(err)
     end
-    --print('i have interacted with the holomap')
+    --function dump(o)
+    --   if type(o) == 'table' then
+    --      local s = '{ '
+    --      for k,v in pairs(o) do
+    --         if type(k) ~= 'number' then k = '"'..k..'"' end
+    --         s = s .. '['..k..'] = ' .. dump(v) .. ','
+    --      end
+    --      return s .. '} '
+    --   else
+    --      return tostring(o)
+    --   end
+    --end
+    
 end
 
 function _update(screen_w, screen_h, ticks)
-    --print('i have interacted with the holomap')    
+    
     g_screen_w = screen_w
     g_screen_h = screen_h
 
@@ -356,6 +369,8 @@ function _update(screen_w, screen_h, ticks)
         g_is_render_team_capture = false
         g_is_render_holomap_grids = false
     end
+    
+    
 
     if update_get_is_notification_holomap_set() then
         g_notification_time = g_notification_time + ticks
@@ -382,10 +397,37 @@ function _update(screen_w, screen_h, ticks)
         update_ui_rectangle(border_padding, screen_h - border_padding - border_h, border_thickness, border_h, border_col)
         update_ui_rectangle(screen_w - border_padding - border_w, screen_h - border_padding - border_thickness, border_w, border_thickness, border_col)
         update_ui_rectangle(screen_w - border_padding - border_thickness, screen_h - border_padding - border_h, border_thickness, border_h, border_col)
-
+        
+        
         if notification:get() then
+            
             render_notification_display(screen_w, screen_h, notification)
+            
         end
+        -- add reward shield amount
+        -- print('shield_awarded start', g_shield_awarded)
+        -- add reward shield amount
+        local notification_type = notification:get_type()
+        local tile = update_get_tile_by_id(notification:get_tile_id())
+            
+        if notification_type == e_map_notification_type.island_captured and g_shield_awarded ~= 1 then
+                
+            --print('island captured difficulty_level', tile:get_difficulty_level())
+            --print('island captured before shield level', get_team_shield_count())
+            local award_shields = tile:get_difficulty_level()
+            local update_toshileds = get_team_shield_count() + award_shields
+            --print('shield_awarded start pre if', g_shield_awarded)
+
+            if g_shield_awarded ~= 0 then
+                --print('shields awarded already')
+            elseif g_shield_awarded == 0 then
+                set_team_shield_count(update_toshileds)
+                --print('island captured after shield level', get_team_shield_count())
+                g_shield_awarded = 1
+                --print('shield_awarded end', g_shield_awarded)    
+            end
+        end  
+        
 
         local is_dismiss = g_is_dismiss_pressed or (g_is_pointer_pressed and g_is_pointer_hovered and g_is_mouse_mode)
 
@@ -413,7 +455,11 @@ function _update(screen_w, screen_h, ticks)
             g_dismiss_counter = 0
             g_is_dismiss_pressed = false
             g_is_pointer_pressed = false
+            -- reset shield reward variable for next island takeover
+            --print('g_shield_awarded pre dismiss', g_shield_awarded)
             update_map_dismiss_notification()
+            g_shield_awarded = 0
+            --print('g_shield_awarded pre dismiss', g_shield_awarded) 
         end
     else
         local vehicle_count = update_get_map_vehicle_count()
@@ -1365,34 +1411,7 @@ g_pointer_hold_count = 0
 function input_event(event, action)
     g_is_pointer_down = false
     g_is_pointer_release = false
-    print('i have input_event with the holomap')
 
-    local team = update_get_screen_team_id()
-    --print('team', team)
-    local drydock_island_id = find_team_drydock(team)
-    drydock_island_id = drydock_island_id:get_id()
-
-    --print('drydock_island_id', drydock_island_id)
-    local shield_count_holo = get_team_shield_count(drydock_island_id)
-    --print('shield_count_l', shield_count_l)
-    --local team = update_get_screen_team_id()
-    --local drydock_island_id = find_team_drydock(team)
-    --local shield_count_l = get_team_shield_count(drydock_island_id)
-    print('add 2 shields to count from holomap...')
-    local updated_shield_amount = shield_count_holo + 2
-    set_team_shield_count(drydock_island_id, updated_shield_amount)
-    --print('F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT', F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT)
-    --print('F_DRYDOCK_WPTX_STORE_UPGRADE_1', F_DRYDOCK_WPTX_STORE_UPGRADE_1)
-    --print('F_DRYDOCK_WPTX_STORE_UPGRADE_2', F_DRYDOCK_WPTX_STORE_UPGRADE_2)
-
-
-    print('remove all upgrades after touching holomap...')
-    local updated_upgrade_change = 0
-    set_upgrade_flag(drydock_island_id, F_DRYDOCK_WPTX_STORE_UPGRADE_1, updated_upgrade_change)
-    --print('F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT', F_DRYDOCK_WPTX_STORE_SHIELD_AMOUNT)
-    --print('F_DRYDOCK_WPTX_STORE_UPGRADE_1', F_DRYDOCK_WPTX_STORE_UPGRADE_1)
-    --print('F_DRYDOCK_WPTX_STORE_UPGRADE_2', F_DRYDOCK_WPTX_STORE_UPGRADE_2)
-    --set_upgrade_flag(drydock_island_id, F_DRYDOCK_WPTX_STORE_UPGRADE_2, updated_upgrade_change)
 
 
 
@@ -1548,10 +1567,18 @@ function render_notification_display(screen_w, screen_h, notification)
     local text_col = notification_color
 
     -- g_is_render_holomap_grids = false
+     
 
     if notification_type == e_map_notification_type.island_captured then
         local tile = update_get_tile_by_id(notification:get_tile_id())
-        render_notification_tile(screen_w, screen_h, update_get_loc(e_loc.upp_island_captured), text_col, tile)
+        -- this is only for the Text above the captured island
+        render_notification_tile(
+            screen_w, 
+            screen_h, 
+            update_get_loc(e_loc.upp_island_captured) , 
+            text_col, 
+            tile 
+        )
 
         g_is_render_holomap_vehicles = false
         g_is_render_holomap_missiles = false
@@ -1610,7 +1637,6 @@ function render_notification_blueprint(screen_w, screen_h, blueprints, text_col)
             update_ui_rectangle_outline(0, 0, 18, 18, text_col)
             update_ui_image(1, 1, item.icon, color_white, 0)
             update_ui_text(22, 4, item.name, w - 22, 0, color_white, 0)
-
             update_ui_pop_offset()
         end
 
@@ -1624,13 +1650,14 @@ function render_notification_blueprint(screen_w, screen_h, blueprints, text_col)
                 
                 for i = 1, #items do
                     local cx = (screen_w - total_column_width) / 2 + (i - 1) * (column_width + column_spacing)
-                    render_item_data(cx, cy, column_width, items[i])
+                    render_item_data(cx, cy, column_width, items[i] )
+                    
                 end
 
                 cy = cy + item_h + item_spacing
             end
         end
-
+        
         for i = 1, #blueprints do
             table.insert(column_items, g_item_data[blueprints[i]])
 
@@ -1655,9 +1682,8 @@ function render_notification_tile(screen_w, screen_h, label, text_col, tile)
         cy = cy + update_ui_text_scale(0, cy, label, screen_w, 1, text_col, 0, 3)
         
         update_set_screen_map_position_scale(tile_pos:x(), tile_pos:y(), map_size_for_tile)
-        -- update_ui_rectangle_outline((screen_w - tile_rect_size) / 2, (screen_h - tile_rect_size) / 2, tile_rect_size, tile_rect_size, text_col)
-
-        cy = (screen_h + tile_rect_size) / 2 - 10
+        
+        cy = (screen_h + tile_rect_size) / 2 - 20
         cy = cy + update_ui_text(0, cy, tile:get_name(), screen_w, 1, text_col, 0)
 
         local difficulty_level = tile:get_difficulty_level()
@@ -1668,12 +1694,23 @@ function render_notification_tile(screen_w, screen_h, label, text_col, tile)
         for i = 0, difficulty_level - 1 do
             update_ui_image(screen_w / 2 - total_w / 2 + (icon_w + icon_spacing) * i, cy, atlas_icons.column_difficulty, text_col, 0)
         end
+        
         cy = cy + 10
-
+        
         local facility_type = tile:get_facility_category()
         local facility_data = g_item_categories[facility_type]
         update_ui_image((screen_w - update_ui_get_text_size(facility_data.name, 10000, 0)) / 2 - 8, cy, facility_data.icon, text_col, 0)
         cy = cy + update_ui_text(8, cy, facility_data.name, screen_w, 1, text_col, 0)
+
+        -- new shield award notification
+        --local difficulty_level_test = 1
+        --local total_w_test = icon_w * difficulty_level_test + icon_spacing * (difficulty_level_test - 1)
+        for i = 0, difficulty_level - 1 do
+            update_ui_image(screen_w / 2 - total_w * 2 / 2 - 10+ (icon_w + icon_spacing) * i, cy, atlas_icons.column_difficulty, color8(255, 165, 0, 255), 0)
+        end
+        cy = cy + update_ui_text(total_w + 20, cy, 'Awarded ', screen_w, 1, color8(255, 165, 0, 255), 0)
+        
+
     else
         update_ui_text_scale(0, screen_h / 2 - 15, label, screen_w, 1, text_col, 0, 3)
     end

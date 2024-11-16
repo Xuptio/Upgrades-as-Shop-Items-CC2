@@ -38,6 +38,9 @@ g_is_render_hp = true
 g_is_render_control_mode = true
 g_is_render_compass = true
 
+
+
+
 g_notification = {
     notification_vehicle_control_mode = {
         text = "",
@@ -155,14 +158,23 @@ function update(screen_w, screen_h, tick_fraction, delta_time, local_peer_id, ve
     if vehicle and vehicle:get() then
         g_last_vid = vehicle:get_id()
     end
+    --print('veh hud up', g_upgrade_1_purchased)
+    
 end
 
 function real_update(screen_w, screen_h, tick_fraction, delta_time, local_peer_id, vehicle, map_data)
+    
+    
+    --print('veh hud up real', g_upgrade_1_purchased)
+
     update_animations(delta_time, vehicle)
     -- update_hover_data()
     g_notification:update(delta_time, vehicle)
 
     g_is_attachment_linked = false
+
+    --print(g_ve_hud_upp1_ref)
+    --print(g_ve_hud_upp2_ref)
 
     g_is_render_speed = true
     g_is_render_altitude = true
@@ -4144,7 +4156,43 @@ function render_attachment_vision(screen_w, screen_h, map_data, vehicle, attachm
         local vehicle_screen_radius = get_object_size_on_screen(screen_w, target_hovered.vehicle:get_position(), 20)
         local radius_factor = clamp(vehicle_screen_radius / 50, 0, 1)
         
-        local observation_factor = dist_factor * radius_factor
+        -- original
+        --local observation_factor = dist_factor * radius_factor
+        local upp_1 = 0
+        local upp_2 = 0
+        local upp_3 = 0
+        --
+        --print(upgrade_1['purchased'])
+        --print(upgrade_2['purchased'])
+        
+        --print(g_upgrade_2_purchased)
+        
+        --print(get_upgrade_flag_other_script(2, 0x10))
+        --print(get_upgrade_state_other_scripts(upgrade_2,g_upgrade_2_purchased))
+         
+        --print(vehicle_hud_upgrade2_ref)
+        status, err = pcall(function()
+                
+              --print("veh hud g1  ", g_upgrade_1_purchased)
+              --print("veh hud g1 ref ", g_ve_hud_upp1_ref)
+              --print("get the fucking thing ", get_upgrade_flagz(2))
+
+              --local settings = update_get_game_settings()
+              --print('settings', dump(settings))
+        --    print(get_upgrade_flag_other_script(2, 0x10))
+        --    --print(get_upgrade_state_other_scripts(upgrade_2, g_upgrade_2_purchased))
+            end)
+
+        --print(status, err)
+
+        if g_upgrade_1_purchased > 0 then
+            upp_1 = 1
+        elseif g_upgrade_2_purchased > 0 then
+            upp_2 = 2
+        end
+        --print(upp_1, upp_2, upp_3)
+        local observation_factor = (dist_factor * radius_factor) + upp_1 + upp_2 + upp_3
+         
 
         if target_hovered.vehicle:get_is_observation_revealed() == false then
             update_set_observed_vehicle(target_hovered.id, observation_factor)
@@ -5197,3 +5245,6 @@ function render_compass_waypoint(x, y, w, mark, col, size)
     end
 
 end
+
+
+

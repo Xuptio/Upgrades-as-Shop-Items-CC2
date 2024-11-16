@@ -1139,6 +1139,13 @@ function update(screen_w, screen_h, ticks)
     if not st then
         print(err)
     end
+    
+    g_upgrade_1_purchased = get_upgrade_flag(2)
+    --print('veh control update g1 upgrade', g_upgrade_1_purchased)
+
+    g_ve_hud_upp1_ref = g_upgrade_1_purchased
+    g_ve_hud_upp2_ref = g_upgrade_2_purchased
+
 end
 
 function _update(screen_w, screen_h, ticks)
